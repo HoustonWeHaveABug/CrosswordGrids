@@ -3,7 +3,6 @@
 
 #define SQUARE_VAL_WHITE '.'
 #define SQUARE_VAL_BLACK '#'
-#define WORD_LEN_MIN 3UL
 
 typedef struct {
 	unsigned long row;
@@ -25,13 +24,18 @@ int whites_connected(unsigned long);
 void add_neighbours_to_queue(square_t *);
 void add_to_queue(square_t *);
 
-unsigned long grid_size, squares_n, wn_max, solutions_n, queue_size;
+unsigned long grid_size, word_len_min, squares_n, wn_max, solutions_n, queue_size;
 square_t *squares, **queue;
 
 int main(void) {
 	unsigned long len_wns_hor, *wns_hor, len_wns_vert, *wns_vert, i, j;
 	if (scanf("%lu", &grid_size) != 1 || grid_size%2UL == 0UL) {
 		fprintf(stderr, "Invalid grid size\n");
+		fflush(stderr);
+		return EXIT_FAILURE;
+	}
+	if (scanf("%lu", &word_len_min) != 1 || word_len_min < 1UL || word_len_min > grid_size) {
+		fprintf(stderr, "Invalid word minimum length\n");
 		fflush(stderr);
 		return EXIT_FAILURE;
 	}
@@ -296,11 +300,11 @@ int check_white_forward(square_t *square, unsigned long *wn_hor, unsigned long *
 		square_u = NULL;
 	}
 	if (!square_l || square_l->val == SQUARE_VAL_BLACK) {
-		if (square->col+WORD_LEN_MIN > grid_size) {
+		if (square->col+word_len_min > grid_size) {
 			return 0;
 		}
 		if (!square_u || square_u->val == SQUARE_VAL_BLACK) {
-			if (square->row+WORD_LEN_MIN > grid_size || *wn_hor != *wn_vert || *wn_hor == wn_max) {
+			if (square->row+word_len_min > grid_size || *wn_hor != *wn_vert || *wn_hor == wn_max) {
 				return 0;
 			}
 			square->len_vert = 1UL;
@@ -315,7 +319,7 @@ int check_white_forward(square_t *square, unsigned long *wn_hor, unsigned long *
 	}
 	else {
 		if (!square_u || square_u->val == SQUARE_VAL_BLACK) {
-			if (square->row+WORD_LEN_MIN > grid_size || *wn_hor <= *wn_vert) {
+			if (square->row+word_len_min > grid_size || *wn_hor <= *wn_vert) {
 				return 0;
 			}
 			square->len_vert = 1UL;
@@ -342,7 +346,7 @@ int check_black_forward(square_t *square) {
 	else {
 		square_u = NULL;
 	}
-	if ((square_l && square_l->val == SQUARE_VAL_WHITE && square_l->len_hor < WORD_LEN_MIN) || (square_u && square_u->val == SQUARE_VAL_WHITE && square_u->len_vert < WORD_LEN_MIN)) {
+	if ((square_l && square_l->val == SQUARE_VAL_WHITE && square_l->len_hor < word_len_min) || (square_u && square_u->val == SQUARE_VAL_WHITE && square_u->len_vert < word_len_min)) {
 		return 0;
 	}
 	square->len_hor = 0UL;
