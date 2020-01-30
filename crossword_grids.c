@@ -125,7 +125,7 @@ void set_square(square_t *square, unsigned long row, unsigned long col) {
 }
 
 unsigned long *set_wns(const char *name, unsigned long *len_wns) {
-	unsigned long *wns, i;
+	unsigned long *wns;
 	if (scanf("%lu", len_wns) != 1) {
 		fprintf(stderr, "Invalid length of %s word numbers\n", name);
 		fflush(stderr);
@@ -139,6 +139,7 @@ unsigned long *set_wns(const char *name, unsigned long *len_wns) {
 	}
 	wns[0] = 0UL;
 	if (*len_wns > 0UL) {
+		unsigned long i;
 		if (scanf("%lu", wns+1UL) != 1 || wns[1] != 1UL) {
 			fprintf(stderr, "Invalid %s word number\n", name);
 			fflush(stderr);
@@ -158,7 +159,9 @@ unsigned long *set_wns(const char *name, unsigned long *len_wns) {
 
 void crossword(square_t *square_for, unsigned long *wn_for_hor, unsigned long *wn_for_vert, square_t *square_back, unsigned long *wn_back_hor, unsigned long *wn_back_vert, unsigned long whites_n) {
 	if (square_for->row == grid_size) {
-		if (*wn_for_hor == wn_max && *wn_for_vert == wn_max && whites_connected(whites_n)) {
+		square_t *square;
+		for (square = square_back+grid_size; square > square_back && check_backward(square, &wn_back_hor, &wn_back_vert); square--);
+		if (*wn_for_hor == wn_max && *wn_for_vert == wn_max && *wn_back_hor == 0UL && *wn_back_vert == 0UL && whites_connected(whites_n)) {
 			unsigned long i;
 			solutions_n++;
 			puts("Solution found");
@@ -176,94 +179,16 @@ void crossword(square_t *square_for, unsigned long *wn_for_hor, unsigned long *w
 	if (square_for < square_back) {
 		if (check_white_forward(square_for, wn_for_hor, wn_for_vert)) {
 			unsigned long *wn_back_hor_old, *wn_back_vert_old;
-			if (square_for->len_hor == 1UL) {
-				wn_for_hor++;
-			}
-			if (square_for->len_vert == 1UL) {
-				wn_for_vert++;
-			}
 			wn_back_hor_old = wn_back_hor;
 			wn_back_vert_old = wn_back_vert;
-			if (check_backward(square_back, &wn_back_hor, &wn_back_vert)) {
-				crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n+2UL);
-			}
-			wn_back_vert = wn_back_vert_old;
-			wn_back_hor = wn_back_hor_old;
-			if (square_for->len_vert == 1UL) {
-				wn_for_vert--;
-			}
-			if (square_for->len_hor == 1UL) {
-				wn_for_hor--;
-			}
-		}
-		if (check_black_forward(square_for)) {
-			unsigned long *wn_back_hor_old, *wn_back_vert_old;
-			square_for->val = SQUARE_VAL_BLACK;
-			square_back->val = SQUARE_VAL_BLACK;
-			wn_back_hor_old = wn_back_hor;
-			wn_back_vert_old = wn_back_vert;
-			if (check_backward(square_back, &wn_back_hor, &wn_back_vert)) {
-				crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n);
-			}
-			wn_back_vert = wn_back_vert_old;
-			wn_back_hor = wn_back_hor_old;
-			square_back->val = SQUARE_VAL_WHITE;
-			square_for->val = SQUARE_VAL_WHITE;
-		}
-	}
-	else if (square_for == square_back) {
-		if (check_white_forward(square_for, wn_for_hor, wn_for_vert)) {
-			unsigned long *wn_back_hor_old, *wn_back_vert_old;
-			if (square_for->len_hor == 1UL) {
-				wn_for_hor++;
-			}
-			if (square_for->len_vert == 1UL) {
-				wn_for_vert++;
-			}
-			wn_back_hor_old = wn_back_hor;
-			wn_back_vert_old = wn_back_vert;
-			if (check_backward(square_back, &wn_back_hor, &wn_back_vert)) {
-				crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n+1UL);
-			}
-			wn_back_vert = wn_back_vert_old;
-			wn_back_hor = wn_back_hor_old;
-			if (square_for->len_vert == 1UL) {
-				wn_for_vert--;
-			}
-			if (square_for->len_hor == 1UL) {
-				wn_for_hor--;
-			}
-		}
-		if (check_black_forward(square_for)) {
-			unsigned long *wn_back_hor_old, *wn_back_vert_old;
-			square_for->val = SQUARE_VAL_BLACK;
-			wn_back_hor_old = wn_back_hor;
-			wn_back_vert_old = wn_back_vert;
-			if (check_backward(square_back, &wn_back_hor, &wn_back_vert)) {
-				crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n);
-			}
-			wn_back_vert = wn_back_vert_old;
-			wn_back_hor = wn_back_hor_old;
-			square_for->val = SQUARE_VAL_WHITE;
-		}
-	}
-	else {
-		if (square_for->val == SQUARE_VAL_WHITE) {
-			if (check_white_forward(square_for, wn_for_hor, wn_for_vert)) {
-				unsigned long *wn_back_hor_old, *wn_back_vert_old;
+			if (square_back->row == grid_size-1UL || check_backward(square_back+grid_size, &wn_back_hor, &wn_back_vert)) {
 				if (square_for->len_hor == 1UL) {
 					wn_for_hor++;
 				}
 				if (square_for->len_vert == 1UL) {
 					wn_for_vert++;
 				}
-				wn_back_hor_old = wn_back_hor;
-				wn_back_vert_old = wn_back_vert;
-				if (check_backward(square_back, &wn_back_hor, &wn_back_vert)) {
-					crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n);
-				}
-				wn_back_vert = wn_back_vert_old;
-				wn_back_hor = wn_back_hor_old;
+				crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n+2UL);
 				if (square_for->len_vert == 1UL) {
 					wn_for_vert--;
 				}
@@ -271,15 +196,69 @@ void crossword(square_t *square_for, unsigned long *wn_for_hor, unsigned long *w
 					wn_for_hor--;
 				}
 			}
+			wn_back_vert = wn_back_vert_old;
+			wn_back_hor = wn_back_hor_old;
+		}
+		if (check_black_forward(square_for)) {
+			square_for->val = SQUARE_VAL_BLACK;
+			square_back->val = SQUARE_VAL_BLACK;
+			if (square_back->row == grid_size-1UL || check_backward(square_back+grid_size, &wn_back_hor, &wn_back_vert)) {
+				crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n);
+			}
+			square_back->val = SQUARE_VAL_WHITE;
+			square_for->val = SQUARE_VAL_WHITE;
+		}
+	}
+	else if (square_for == square_back) {
+		if (check_white_forward(square_for, wn_for_hor, wn_for_vert)) {
+			unsigned long *wn_back_hor_old, *wn_back_vert_old;
+			wn_back_hor_old = wn_back_hor;
+			wn_back_vert_old = wn_back_vert;
+			if (square_back->row == grid_size-1UL || check_backward(square_back+grid_size, &wn_back_hor, &wn_back_vert)) {
+				if (square_for->len_hor == 1UL) {
+					wn_for_hor++;
+				}
+				if (square_for->len_vert == 1UL) {
+					wn_for_vert++;
+				}
+				crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n+1UL);
+				if (square_for->len_vert == 1UL) {
+					wn_for_vert--;
+				}
+				if (square_for->len_hor == 1UL) {
+					wn_for_hor--;
+				}
+			}
+			wn_back_vert = wn_back_vert_old;
+			wn_back_hor = wn_back_hor_old;
+		}
+		if (check_black_forward(square_for)) {
+			square_for->val = SQUARE_VAL_BLACK;
+			if (square_back->row == grid_size-1UL || check_backward(square_back+grid_size, &wn_back_hor, &wn_back_vert)) {
+				crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n);
+			}
+			square_for->val = SQUARE_VAL_WHITE;
+		}
+	}
+	else {
+		if (square_for->val == SQUARE_VAL_WHITE) {
+			if (check_white_forward(square_for, wn_for_hor, wn_for_vert)) {
+				if (square_back->row == grid_size-1UL || check_backward(square_back+grid_size, &wn_back_hor, &wn_back_vert)) {
+					if (square_for->len_hor == 1UL) {
+						wn_for_hor++;
+					}
+					if (square_for->len_vert == 1UL) {
+						wn_for_vert++;
+					}
+					crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n);
+				}
+			}
 		}
 		else if (square_for->val == SQUARE_VAL_BLACK) {
 			if (check_black_forward(square_for)) {
-				unsigned long *wn_back_hor_old = wn_back_hor, *wn_back_vert_old = wn_back_vert;
-				if (check_backward(square_back, &wn_back_hor, &wn_back_vert)) {
+				if (square_back->row == grid_size-1UL || check_backward(square_back+grid_size, &wn_back_hor, &wn_back_vert)) {
 					crossword(square_for+1UL, wn_for_hor, wn_for_vert, square_back-1UL, wn_back_hor, wn_back_vert, whites_n);
 				}
-				wn_back_vert = wn_back_vert_old;
-				wn_back_hor = wn_back_hor_old;
 			}
 		}
 	}
@@ -354,12 +333,8 @@ int check_black_forward(square_t *square) {
 	return 1;
 }
 
-int check_backward(square_t *square_back, unsigned long **wn_hor, unsigned long **wn_vert) {
-	square_t *square, *square_l, *square_u;
-	if (square_back->row == grid_size-1UL) {
-		return 1;
-	}
-	square = square_back+grid_size;
+int check_backward(square_t *square, unsigned long **wn_hor, unsigned long **wn_vert) {
+	square_t *square_l, *square_u;
 	if (square->val == SQUARE_VAL_BLACK) {
 		return 1;
 	}
